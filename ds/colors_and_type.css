@@ -1,0 +1,347 @@
+/* ============================================================
+   Bugatti Design System — Colors & Typography
+   Pure black canvas, white uppercase letterspaced display,
+   serif body, monospace UI. Weight 400 everywhere.
+   ============================================================ */
+
+/* ---- Substitute web fonts (replace with Bugatti faces when available) ---- */
+@import url("https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* ---------- Colors ---------- */
+  /* Brand */
+  --bg-primary: #ffffff;
+  --bg-ink: #ffffff;
+  --bg-link: #c3d9f3;
+
+  /* Surface */
+  --bg-canvas: #000000;
+  --bg-surface-soft: #0d0d0d;
+  --bg-surface-card: #141414;
+  --bg-surface-elevated: #1f1f1f;
+
+  /* Hairline */
+  --bg-hairline: #262626;
+  --bg-hairline-strong: #3a3a3a;
+
+  /* Text */
+  --bg-on-dark: #ffffff;
+  --bg-on-primary: #000000;
+  --bg-on-photo: #ffffff;
+  --bg-body: #cccccc;
+  --bg-body-strong: #e6e6e6;
+  --bg-muted: #999999;
+  --bg-muted-soft: #666666;
+
+  /* Semantic */
+  --bg-warning: #d4a017;
+  --bg-success: #5fa657;
+
+  /* ---------- Type families ---------- */
+  --bg-font-display: "Saira Condensed", "Bugatti Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-font-body: "Cormorant Garamond", "Bugatti Text Regular", Garamond, "Times New Roman", serif;
+  --bg-font-mono: "JetBrains Mono", "Bugatti Monospace", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+
+  /* ---------- Spacing ---------- */
+  --bg-space-xxs: 4px;
+  --bg-space-xs: 8px;
+  --bg-space-sm: 12px;
+  --bg-space-md: 16px;
+  --bg-space-lg: 24px;
+  --bg-space-xl: 40px;
+  --bg-space-xxl: 64px;
+  --bg-space-section: 120px;
+
+  /* ---------- Radius ---------- */
+  --bg-radius-none: 0px;
+  --bg-radius-pill: 9999px;
+  --bg-radius-full: 9999px;
+
+  /* ---------- Hairline width ---------- */
+  --bg-border: 1px;
+}
+
+/* ============================================================
+   Type tokens — per the brand brief.
+   Use as @apply‑style mixins by composing the CSS vars below.
+   ============================================================ */
+
+/* Display XL — hero h1 */
+.bg-display-xl {
+  font-family: var(--bg-font-display);
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+/* Display LG — section heads */
+.bg-display-lg {
+  font-family: var(--bg-font-display);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+/* Display MD — sub‑section heads, model names */
+.bg-display-md {
+  font-family: var(--bg-font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+/* Display SM — card titles */
+.bg-display-sm {
+  font-family: var(--bg-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+/* Wordmark — "BUGATTI" in nav and footer */
+.bg-wordmark {
+  font-family: var(--bg-font-display);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+.bg-title-md {
+  font-family: var(--bg-font-display);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+.bg-title-sm {
+  font-family: var(--bg-font-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+.bg-caption {
+  font-family: var(--bg-font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+.bg-body-md {
+  font-family: var(--bg-font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--bg-body);
+}
+
+.bg-body-sm {
+  font-family: var(--bg-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--bg-body);
+}
+
+.bg-button-label {
+  font-family: var(--bg-font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+.bg-nav-link {
+  font-family: var(--bg-font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+}
+
+/* ============================================================
+   Semantic resets — apply to a page that imports this stylesheet.
+   ============================================================ */
+
+html, body {
+  background: var(--bg-canvas);
+  color: var(--bg-on-dark);
+  font-family: var(--bg-font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, .h1 {
+  font-family: var(--bg-font-display);
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+  margin: 0;
+}
+
+h2, .h2 {
+  font-family: var(--bg-font-display);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+  margin: 0;
+}
+
+h3, .h3 {
+  font-family: var(--bg-font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+  margin: 0;
+}
+
+h4, .h4 {
+  font-family: var(--bg-font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--bg-on-dark);
+  margin: 0;
+}
+
+p {
+  font-family: var(--bg-font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--bg-body);
+  margin: 0 0 var(--bg-space-md);
+}
+
+a {
+  color: var(--bg-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 200ms ease-out;
+}
+a:hover { opacity: 0.7; }
+
+code, kbd, samp, pre {
+  font-family: var(--bg-font-mono);
+  font-size: 0.9em;
+  color: var(--bg-on-dark);
+}
+
+hr {
+  border: 0;
+  border-top: var(--bg-border) solid var(--bg-hairline);
+  margin: var(--bg-space-xxl) 0;
+}
+
+::selection {
+  background: var(--bg-on-dark);
+  color: var(--bg-on-primary);
+}
+
+/* ============================================================
+   Component primitives
+   ============================================================ */
+
+.bg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--bg-on-dark);
+  border: var(--bg-border) solid var(--bg-on-dark);
+  border-radius: var(--bg-radius-pill);
+  padding: 14px 32px;
+  height: 44px;
+  font-family: var(--bg-font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 200ms ease-out, border-width 150ms ease-out;
+}
+.bg-btn:hover { opacity: 0.7; }
+.bg-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--bg-on-dark);
+}
+
+.bg-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--bg-on-dark);
+  border: var(--bg-border) solid var(--bg-on-dark);
+  border-radius: var(--bg-radius-full);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: opacity 200ms ease-out;
+}
+.bg-btn-icon:hover { opacity: 0.7; }
+
+.bg-input {
+  width: 100%;
+  background: transparent;
+  color: var(--bg-on-dark);
+  border: 0;
+  border-bottom: var(--bg-border) solid var(--bg-hairline-strong);
+  border-radius: 0;
+  padding: 12px 0;
+  height: 44px;
+  font-family: var(--bg-font-body);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 200ms ease-out;
+}
+.bg-input::placeholder { color: var(--bg-muted); }
+.bg-input:focus { border-bottom-color: var(--bg-on-dark); }
+
+.bg-divider { border-top: var(--bg-border) solid var(--bg-hairline); }
