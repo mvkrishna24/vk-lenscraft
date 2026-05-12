@@ -187,6 +187,10 @@
    Semantic resets — apply to a page that imports this stylesheet.
    ============================================================ */
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   background: var(--bg-canvas);
   color: var(--bg-on-dark);
@@ -196,6 +200,11 @@ html, body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:focus-visible {
+  outline: 2px solid var(--bg-on-dark);
+  outline-offset: 3px;
 }
 
 h1, .h1 {
