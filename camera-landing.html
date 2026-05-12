@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VK Lenscraft — Camera Experience</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:#000;color:#fff;font-family:'JetBrains Mono',monospace;overflow-x:hidden;cursor:none}
+
+/* custom cursor */
+.cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:#fff;mix-blend-mode:difference;
+  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .15s,width .3s,height .3s}
+.cursor.big{width:56px;height:56px}
+@media(max-width:768px){body{cursor:auto}.cursor{display:none}}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:22px 36px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);
+  pointer-events:none}
+nav>*{pointer-events:auto}
+.nav-brand{display:flex;align-items:center;gap:10px;
+  font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#fff}
+.nav-brand-dot{width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#282828,#050505 70%);
+  border:1px solid #2c2c2c;display:grid;place-items:center}
+.nav-brand-dot::after{content:'';width:10px;height:10px;transform:rotate(45deg);
+  background:linear-gradient(135deg,#fff,#aaa)}
+.nav-links{display:flex;gap:2px;background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.08);
+  border-radius:9999px;padding:5px;backdrop-filter:blur(16px)}
+.nav-links a{padding:10px 18px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.65);border-radius:9999px;text-decoration:none;transition:color .2s,background .2s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-cta{display:inline-flex;align-items:center;gap:10px;padding:12px 20px 12px 22px;
+  border-radius:9999px;background:#fff;color:#000;text-decoration:none;
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  box-shadow:0 8px 28px -8px rgba(255,140,60,.5);transition:transform .3s,box-shadow .3s}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 14px 36px -8px rgba(255,140,60,.7)}
+.nav-cta-arr{width:26px;height:26px;border-radius:50%;background:#000;color:#fff;
+  display:grid;place-items:center;transition:transform .4s,background .3s}
+.nav-cta:hover .nav-cta-arr{transform:rotate(-45deg);background:#ff7a18}
+@media(max-width:840px){.nav-links{display:none}.nav-cta{display:none}}
+
+/* ── SCROLL WRAPPER ── */
+#scroller{height:600vh;position:relative}
+
+/* ── STICKY STAGE ── */
+#stage{position:sticky;top:0;height:100vh;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:#000}
+
+/* grain */
+#stage::after{content:'';position:absolute;inset:0;z-index:40;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  opacity:.55}
+
+/* ambient glow */
+#glow{position:absolute;width:800px;height:800px;border-radius:50%;top:50%;left:50%;
+  transform:translate(-50%,-50%);pointer-events:none;z-index:0;opacity:0;
+  background:radial-gradient(circle,rgba(255,122,24,.25) 0%,rgba(200,65,10,.08) 45%,transparent 70%)}
+
+/* light-leak sweep */
+#light-leak{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,122,24,.18) 50%,rgba(255,180,80,.12) 60%,transparent 75%)}
+
+/* camera svg */
+#cam{position:relative;z-index:2;width:min(800px,93vw);height:auto;
+  filter:drop-shadow(0 28px 60px rgba(0,0,0,.95)) drop-shadow(0 0 50px rgba(255,122,24,.05))}
+
+/* lens reveal (clip-path expand) */
+#lri{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;
+  pointer-events:none;z-index:10;opacity:0;
+  clip-path:circle(100px at 50% 50%)}
+#lri img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* flash */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;z-index:50;pointer-events:none}
+
+/* hero text */
+#hero-text{position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:15;opacity:0;
+  text-align:center;padding:24px;pointer-events:none}
+.ht-eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-bottom:20px}
+.ht-title{font-family:'Saira Condensed',sans-serif;
+  font-size:clamp(52px,11vw,148px);font-weight:500;
+  line-height:.88;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:20px}
+.ht-title em{font-family:Georgia,serif;font-style:italic;font-weight:400;text-transform:none;
+  background:linear-gradient(180deg,#ffb273,#ff7a18,#c8410a);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.ht-sub{font-size:13px;color:rgba(255,255,255,.55);letter-spacing:1px;margin-bottom:36px}
+.ht-cta{display:inline-flex;align-items:center;gap:14px;
+  padding:16px 14px 16px 30px;border-radius:9999px;background:#fff;color:#000;
+  text-decoration:none;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  box-shadow:0 16px 48px rgba(255,122,24,.4);pointer-events:auto}
+.ht-cta-arr{width:38px;height:38px;border-radius:50%;background:#000;color:#fff;
+  display:grid;place-items:center}
+
+/* scroll hint */
+#hint{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);z-index:50;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:opacity .6s}
+#hint-line{width:1px;height:36px;
+  background:linear-gradient(to bottom,rgba(255,122,24,.8),transparent);
+  animation:lineDown 2s ease-in-out infinite}
+@keyframes lineDown{
+  0%{transform:scaleY(0);transform-origin:top}
+  50%{transform:scaleY(1);transform-origin:top}
+  51%{transform:scaleY(1);transform-origin:bottom}
+  100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* phase label */
+#plabel{position:fixed;top:22px;right:32px;
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);z-index:201}
+
+/* ── PORTFOLIO ── */
+#portfolio{background:#000;padding:110px 32px 100px;position:relative;z-index:5}
+.pi{max-width:1300px;margin:0 auto}
+.p-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.38);margin-bottom:52px;
+  display:flex;align-items:center;gap:12px}
+.p-eyebrow::before{content:'';display:block;width:28px;height:1px;background:#ff7a18}
+.p-h{font-family:'Saira Condensed',sans-serif;
+  font-size:clamp(48px,8vw,120px);font-weight:500;
+  line-height:.9;text-transform:uppercase;margin-bottom:70px}
+.p-h em{font-family:Georgia,serif;font-style:italic;font-weight:400;text-transform:none;
+  background:linear-gradient(180deg,#ffb273,#ff7a18,#c8410a);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{position:relative;overflow:hidden;background:#090909;
+  border:1px solid rgba(255,255,255,.05);display:block;text-decoration:none;
+  transform:translateY(50px);opacity:0}
+.card.w8{grid-column:span 8;aspect-ratio:16/10}
+.card.w4{grid-column:span 4;aspect-ratio:4/5}
+.card.w4s{grid-column:span 4;aspect-ratio:1/1}
+.card img{width:100%;height:100%;object-fit:cover;display:block;
+  transform:scale(1.05);transition:transform 1.3s cubic-bezier(.22,.61,.36,1)}
+.card:hover img{transform:scale(1.12)}
+.veil{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.85),transparent 55%)}
+.tag{position:absolute;top:16px;left:16px;
+  padding:5px 12px;border:1px solid rgba(255,255,255,.2);border-radius:9999px;
+  background:rgba(0,0,0,.3);backdrop-filter:blur(8px);
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#fff}
+.ctitle{position:absolute;bottom:18px;left:18px;
+  font-family:'Saira Condensed',sans-serif;
+  font-size:22px;text-transform:uppercase;letter-spacing:1px;color:#fff}
+@media(max-width:720px){
+  .card.w8{grid-column:span 12}
+  .card.w4,.card.w4s{grid-column:span 6}}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-dot"></div>VK Lenscraft
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Studio</a>
+    <a href="#portfolio">Work</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+  <a href="index.html#contact" class="nav-cta">
+    Book a session
+    <span class="nav-cta-arr">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
+    </span>
+  </a>
+</nav>
+
+<div id="hint">Scroll <div id="hint-line"></div></div>
+<div id="plabel">01 · Assembly</div>
+<div id="flash"></div>
+
+<!-- ══════════════════ SCROLL CONTAINER ══════════════════ -->
+<div id="scroller">
+<section id="stage">
+  <div id="glow"></div>
+  <div id="light-leak"></div>
+
+  <!-- ══════════════════════════ CAMERA SVG ══════════════════════════ -->
+  <!--
+    ViewBox: 0 0 840 560
+    Lens center: cx=400 cy=285  (horizontally centered for fullscreen reveal)
+    Body spans: x=118 → x=720
+  -->
+  <svg id="cam" viewBox="0 0 840 560" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Body gradients -->
+      <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2c2c2c"/>
+        <stop offset="40%" stop-color="#191919"/>
+        <stop offset="100%" stop-color="#0c0c0c"/>
+      </linearGradient>
+      <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#393939"/>
+        <stop offset="100%" stop-color="#1d1d1d"/>
+      </linearGradient>
+      <!-- Lens gradients -->
+      <radialGradient id="gBarrel" cx="36%" cy="30%" r="64%">
+        <stop offset="0%" stop-color="#383838"/>
+        <stop offset="55%" stop-color="#181818"/>
+        <stop offset="100%" stop-color="#070707"/>
+      </radialGradient>
+      <radialGradient id="gGlass" cx="32%" cy="26%" r="70%">
+        <stop offset="0%" stop-color="#1c2838"/>
+        <stop offset="30%" stop-color="#0f1d2c"/>
+        <stop offset="70%" stop-color="#06101c"/>
+        <stop offset="100%" stop-color="#02080e"/>
+      </radialGradient>
+      <radialGradient id="gGlassHL" cx="27%" cy="20%" r="55%">
+        <stop offset="0%" stop-color="rgba(255,255,255,.22)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </radialGradient>
+      <radialGradient id="gRing" cx="35%" cy="28%" r="65%">
+        <stop offset="0%" stop-color="#4a4a4a"/>
+        <stop offset="100%" stop-color="#181818"/>
+      </radialGradient>
+      <radialGradient id="gBodyGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(255,122,24,.06)"/>
+        <stop offset="100%" stop-color="rgba(255,122,24,0)"/>
+      </radialGradient>
+
+      <!-- Grip ribbing pattern -->
+      <pattern id="pGrip" x="0" y="0" width="4" height="9" patternUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="4" height="4" rx="1.5" fill="#1e1e1e"/>
+      </pattern>
+
+      <!-- Lens clip (for hero image) -->
+      <clipPath id="cLens"><circle cx="400" cy="285" r="91"/></clipPath>
+      <!-- Shutter overlay clip -->
+      <clipPath id="cShut"><circle cx="400" cy="285" r="93"/></clipPath>
+
+      <!-- IRIS MASK: animated hole reveals the lens glass -->
+      <mask id="mIris">
+        <rect width="840" height="560" fill="white"/>
+        <circle id="iris-hole" cx="400" cy="285" r="0" fill="black"/>
+      </mask>
+
+      <!-- Filters -->
+      <filter id="fShadow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#000" flood-opacity=".9"/>
+      </filter>
+    </defs>
+
+    <!-- ════════ BODY ════════ -->
+    <!-- shadow -->
+    <rect id="body-shadow" x="115" y="192" width="605" height="298" rx="14"
+      fill="#000" opacity=".75" filter="url(#fShadow)"/>
+    <!-- main body -->
+    <rect id="body-main" x="120" y="178" width="600" height="293" rx="13"
+      fill="url(#gBody)" stroke="#2d2d2d" stroke-width=".7"/>
+    <!-- top highlight line -->
+    <rect id="body-thl" x="125" y="179" width="588" height="2" rx="1"
+      fill="rgba(255,255,255,.09)"/>
+    <!-- right-edge specular -->
+    <rect id="body-rhl" x="716" y="184" width="2" height="281" rx="1"
+      fill="rgba(255,255,255,.05)"/>
+    <!-- orange rim glow overlay -->
+    <rect x="120" y="178" width="600" height="293" rx="13"
+      fill="url(#gBodyGlow)" id="body-glow-ovl"/>
+
+    <!-- ════════ GRIP (left) ════════ -->
+    <g id="grip">
+      <rect x="120" y="195" width="90" height="272" rx="13"
+        fill="#121212" stroke="#242424" stroke-width=".6"/>
+      <!-- ribbed rubber texture -->
+      <rect x="124" y="200" width="82" height="263" rx="9" fill="url(#pGrip)"/>
+      <!-- grip left specular -->
+      <rect x="124" y="198" width="1.5" height="266" rx=".75"
+        fill="rgba(255,255,255,.06)"/>
+      <!-- grip right divider -->
+      <rect x="208" y="195" width="2" height="272" fill="rgba(255,255,255,.04)"/>
+    </g>
+
+    <!-- ════════ TOP PLATE ════════ -->
+    <g id="top-plate">
+      <rect x="208" y="140" width="510" height="46" rx="8"
+        fill="url(#gTop)" stroke="#363636" stroke-width=".6"/>
+      <!-- top highlight -->
+      <rect x="213" y="141" width="498" height="1.5" rx=".75"
+        fill="rgba(255,255,255,.12)"/>
+    </g>
+
+    <!-- ════════ PENTAPRISM HUMP ════════ -->
+    <g id="pentaprism">
+      <!-- trapezoid hump -->
+      <path d="M 356 140 L 376 102 L 488 102 L 508 140 Z"
+        fill="#1c1c1c" stroke="#313131" stroke-width=".6"/>
+      <path d="M 360 140 L 380 106 L 484 106 L 504 140 Z"
+        fill="#242424"/>
+      <!-- top highlight of hump -->
+      <path d="M 376 103 L 488 103" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/>
+      <!-- viewfinder eyepiece window -->
+      <rect x="390" y="108" width="84" height="26" rx="3"
+        fill="#080808" stroke="#222" stroke-width=".5"/>
+      <rect x="393" y="111" width="78" height="20" rx="2" fill="#030303"/>
+      <!-- blue glass tint in viewfinder -->
+      <rect x="395" y="113" width="30" height="6" rx="2"
+        fill="rgba(80,160,255,.1)"/>
+    </g>
+
+    <!-- ════════ HOTSHOE ════════ -->
+    <g id="hotshoe">
+      <rect x="396" y="97" width="62" height="7" rx="2"
+        fill="#242424" stroke="#303030" stroke-width=".5"/>
+      <rect x="401" y="94" width="52" height="4" rx="1.5"
+        fill="#1c1c1c" stroke="#2e2e2e" stroke-width=".4"/>
+    </g>
+
+    <!-- ════════ MODE DIAL ════════ -->
+    <g id="mode-dial">
+      <circle cx="668" cy="164" r="25" fill="#181818" stroke="#343434" stroke-width=".8"/>
+      <circle cx="668" cy="164" r="21" fill="#0e0e0e" stroke="#262626" stroke-width=".5"/>
+      <!-- tick marks -->
+      <line x1="668" y1="144" x2="668" y2="148" stroke="#464646" stroke-width="1.5"/>
+      <line x1="668" y1="180" x2="668" y2="184" stroke="#464646" stroke-width="1.5"/>
+      <line x1="648" y1="164" x2="652" y2="164" stroke="#464646" stroke-width="1.5"/>
+      <line x1="684" y1="164" x2="688" y2="164" stroke="#464646" stroke-width="1.5"/>
+      <line x1="654" y1="150" x2="657" y2="153" stroke="#3a3a3a" stroke-width="1.2"/>
+      <line x1="679" y1="175" x2="682" y2="178" stroke="#3a3a3a" stroke-width="1.2"/>
+      <!-- center knob -->
+      <circle cx="668" cy="164" r="6" fill="#222"/>
+      <circle cx="668" cy="164" r="3" fill="#363636"/>
+      <!-- M label -->
+      <text x="668" y="161" text-anchor="middle" font-family="monospace" font-size="6.5"
+        fill="rgba(255,122,24,.75)" letter-spacing=".5">M</text>
+    </g>
+
+    <!-- ════════ SHUTTER BUTTON ════════ -->
+    <g id="shutter-btn">
+      <circle cx="252" cy="156" r="17" fill="#181818" stroke="#343434" stroke-width=".8"/>
+      <circle cx="252" cy="156" r="13" fill="#1e1e1e" stroke="#3c3c3c" stroke-width=".5"/>
+      <circle cx="252" cy="156" r="9" fill="url(#gBarrel)"/>
+      <!-- orange accent ring -->
+      <circle cx="252" cy="156" r="14" fill="none"
+        stroke="rgba(255,122,24,.28)" stroke-width="1.5"/>
+    </g>
+
+    <!-- ════════ RIGHT CONTROLS ════════ -->
+    <g id="controls-right">
+      <!-- LCD screen -->
+      <rect x="568" y="250" width="88" height="118" rx="4"
+        fill="#080808" stroke="#1e1e1e" stroke-width=".6"/>
+      <rect x="572" y="254" width="80" height="110" rx="2" fill="#020202"/>
+      <!-- LCD readout text -->
+      <text x="612" y="296" text-anchor="middle" font-family="monospace" font-size="8"
+        fill="rgba(80,255,100,.26)">1/500</text>
+      <text x="612" y="310" text-anchor="middle" font-family="monospace" font-size="8"
+        fill="rgba(80,255,100,.26)">F 1.8</text>
+      <text x="612" y="324" text-anchor="middle" font-family="monospace" font-size="8"
+        fill="rgba(80,255,100,.26)">ISO 800</text>
+      <!-- button cluster -->
+      <circle cx="608" cy="260" r="8" fill="#0c0c0c" stroke="#1e1e1e" stroke-width=".5"/>
+      <circle cx="630" cy="258" r="8" fill="#0c0c0c" stroke="#1e1e1e" stroke-width=".5"/>
+      <circle cx="650" cy="262" r="8" fill="#0c0c0c" stroke="#1e1e1e" stroke-width=".5"/>
+      <!-- AF/MF toggle -->
+      <rect x="608" y="294" width="36" height="12" rx="6"
+        fill="#0c0c0c" stroke="#222" stroke-width=".5"/>
+      <circle cx="617" cy="300" r="5.5" fill="#181818" stroke="#2a2a2a" stroke-width=".4"/>
+      <!-- rear command dial -->
+      <circle cx="636" cy="352" r="24" fill="#111" stroke="#222" stroke-width=".6"/>
+      <circle cx="636" cy="352" r="20" fill="#090909"/>
+      <circle cx="636" cy="352" r="6.5" fill="#181818" stroke="#2a2a2a" stroke-width=".5"/>
+      <!-- dial marks -->
+      <line x1="636" y1="329" x2="636" y2="333" stroke="#2e2e2e" stroke-width="1.2"/>
+      <line x1="636" y1="371" x2="636" y2="375" stroke="#2e2e2e" stroke-width="1.2"/>
+      <line x1="613" y1="352" x2="617" y2="352" stroke="#2e2e2e" stroke-width="1.2"/>
+      <line x1="655" y1="352" x2="659" y2="352" stroke="#2e2e2e" stroke-width="1.2"/>
+    </g>
+
+    <!-- ════════ BOTTOM PLATE ════════ -->
+    <g id="bottom-plate">
+      <rect x="208" y="468" width="510" height="11" rx="3"
+        fill="#111" stroke="#222" stroke-width=".5"/>
+      <!-- tripod socket -->
+      <rect x="390" y="468" width="24" height="11" rx="2"
+        fill="#0a0a0a" stroke="#2a2a2a" stroke-width=".4"/>
+      <!-- bottom rim-light (orange) -->
+      <rect x="212" y="477" width="502" height="1" rx=".5"
+        fill="rgba(255,122,24,.07)"/>
+    </g>
+
+    <!-- ════════════════════ LENS ASSEMBLY ════════════════════ -->
+    <!-- Centered at cx=400 cy=285 -->
+
+    <!-- Outer mounting ring -->
+    <g id="lens-outer">
+      <circle cx="400" cy="285" r="147" fill="#0b0b0b" stroke="#1e1e1e" stroke-width="1"/>
+      <circle cx="400" cy="285" r="143" fill="none" stroke="#161616" stroke-width="1.5"/>
+      <!-- dashed bayonet ring -->
+      <circle cx="400" cy="285" r="141" fill="none"
+        stroke="#232323" stroke-width=".6" stroke-dasharray="3 10"/>
+      <!-- orange accent ring -->
+      <circle cx="400" cy="285" r="144" fill="none"
+        stroke="rgba(255,122,24,.22)" stroke-width="1.5"/>
+      <!-- bayonet lugs (3×, at 120° intervals) -->
+      <rect x="543" y="283.5" width="11" height="3" rx="1.5" fill="#2e2e2e"
+        transform="rotate(0,400,285)"/>
+      <rect x="543" y="283.5" width="11" height="3" rx="1.5" fill="#2e2e2e"
+        transform="rotate(120,400,285)"/>
+      <rect x="543" y="283.5" width="11" height="3" rx="1.5" fill="#2e2e2e"
+        transform="rotate(240,400,285)"/>
+    </g>
+
+    <!-- Barrel body ring (ring-1) -->
+    <g id="lens-ring-1">
+      <circle cx="400" cy="285" r="133" fill="url(#gBarrel)" stroke="#232323" stroke-width="1"/>
+      <circle cx="400" cy="285" r="129" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+      <!-- distance scale text -->
+      <text x="400" y="162" text-anchor="middle" font-family="monospace" font-size="7"
+        fill="#3a3a3a" transform="rotate(-22,400,285)">0.5m</text>
+      <text x="400" y="162" text-anchor="middle" font-family="monospace" font-size="7"
+        fill="#484848" transform="rotate(0,400,285)">1.0</text>
+      <text x="400" y="162" text-anchor="middle" font-family="monospace" font-size="7"
+        fill="#3a3a3a" transform="rotate(22,400,285)">∞</text>
+    </g>
+
+    <!-- Focus ring (ring-2) -->
+    <g id="lens-ring-2">
+      <circle cx="400" cy="285" r="120" fill="#111" stroke="#272727" stroke-width="1.2"/>
+      <circle cx="400" cy="285" r="116" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+      <!-- ribbed focus ring markings -->
+      <circle cx="400" cy="285" r="118" fill="none"
+        stroke="#232323" stroke-width="2.5" stroke-dasharray="1.2 5.2"/>
+    </g>
+
+    <!-- Aperture ring (ring-3) -->
+    <g id="lens-ring-3">
+      <circle cx="400" cy="285" r="107" fill="#0e0e0e" stroke="#212121" stroke-width="1.5"/>
+      <circle cx="400" cy="285" r="103" fill="none" stroke="#181818" stroke-width="1"/>
+      <!-- f-stop labels -->
+      <text x="400" y="188" text-anchor="middle" font-family="monospace" font-size="6"
+        fill="#2e2e2e" transform="rotate(-36,400,285)">f/1.4</text>
+      <text x="400" y="188" text-anchor="middle" font-family="monospace" font-size="6"
+        fill="rgba(255,122,24,.65)" transform="rotate(0,400,285)">f/2.8</text>
+      <text x="400" y="188" text-anchor="middle" font-family="monospace" font-size="6"
+        fill="#2e2e2e" transform="rotate(36,400,285)">f/5.6</text>
+    </g>
+
+    <!-- Inner barrel (ring-4) -->
+    <g id="lens-ring-4">
+      <circle cx="400" cy="285" r="97" fill="url(#gRing)" stroke="#212121" stroke-width="1"/>
+      <circle cx="400" cy="285" r="94" fill="none" stroke="#0d0d0d" stroke-width="2"/>
+    </g>
+
+    <!-- Glass element background -->
+    <g id="lens-glass">
+      <circle cx="400" cy="285" r="93" fill="url(#gGlass)"/>
+      <circle cx="400" cy="285" r="89" fill="#030c18"/>
+      <circle cx="400" cy="285" r="93" fill="none" stroke="#182232" stroke-width="1.5"/>
+    </g>
+
+    <!-- Glass circle used for JS getBoundingClientRect -->
+    <circle id="glass-circle" cx="400" cy="285" r="93" fill="transparent"/>
+
+    <!-- Hero image (inside lens, appears in phase 3) -->
+    <image id="hero-img"
+      href="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=90"
+      x="309" y="194" width="182" height="182"
+      clip-path="url(#cLens)"
+      preserveAspectRatio="xMidYMid slice"
+      opacity="0"/>
+
+    <!-- ════════ SHUTTER BLADES ════════ -->
+    <!--
+      Dark cover masked by iris-mask.
+      When iris-hole radius grows → dark cover disappears → glass/photo visible.
+      6 decorative blade-edge lines rotate as shutter opens.
+    -->
+    <g id="shutter-cover-group">
+      <!-- Main dark shutter cover (iris-masked) -->
+      <circle cx="400" cy="285" r="93"
+        fill="#050d18" mask="url(#mIris)" clip-path="url(#cShut)"/>
+
+      <!-- Decorative blade dividers (visible while shutter transitions) -->
+      <g id="blade-lines" opacity="0" clip-path="url(#cShut)">
+        <!-- 6 blades at 0°, 60°, 120°, 180°, 240°, 300° -->
+        <!-- Each is a thin dark wedge with an edge highlight -->
+        <g id="blade-0" style="transform-origin:400px 285px;transform:rotate(0deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+        <g id="blade-1" style="transform-origin:400px 285px;transform:rotate(60deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+        <g id="blade-2" style="transform-origin:400px 285px;transform:rotate(120deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+        <g id="blade-3" style="transform-origin:400px 285px;transform:rotate(180deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+        <g id="blade-4" style="transform-origin:400px 285px;transform:rotate(240deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+        <g id="blade-5" style="transform-origin:400px 285px;transform:rotate(300deg)">
+          <path d="M400 285 L400 193 A92 92 0 0 1 479.6 239 Z" fill="#08111e" stroke="rgba(255,122,24,.12)" stroke-width=".8"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- Glass reflections (appear on activation) -->
+    <g id="reflections" opacity="0">
+      <!-- Primary arc highlight -->
+      <ellipse cx="380" cy="260" rx="28" ry="16" fill="none"
+        stroke="rgba(255,255,255,.14)" stroke-width="1.5"
+        transform="rotate(-30,380,260)"/>
+      <!-- Bright spot -->
+      <ellipse cx="374" cy="255" rx="7" ry="4" fill="rgba(255,255,255,.18)"
+        transform="rotate(-30,374,255)"/>
+      <!-- Blue coating shimmer -->
+      <ellipse cx="424" cy="315" rx="14" ry="9" fill="none"
+        stroke="rgba(120,170,255,.08)" stroke-width="1"
+        transform="rotate(-30,424,315)"/>
+      <!-- Lens coating arc -->
+      <path d="M330 268 Q400 238 466 272" fill="none"
+        stroke="rgba(100,160,255,.09)" stroke-width="1.5"/>
+      <!-- Overall glass highlight -->
+      <circle cx="400" cy="285" r="93" fill="url(#gGlassHL)"/>
+    </g>
+
+    <!-- Lens brand text arc -->
+    <g opacity=".5">
+      <path id="brandArc" d="M283 285 A117 117 0 0 1 517 285" fill="none"/>
+      <text font-family="'JetBrains Mono',monospace" font-size="7" fill="#2e2e2e" letter-spacing="2.5">
+        <textPath href="#brandArc" startOffset="8%">VK · LENSCRAFT · 85mm · F1.4 · Ø 77mm ·</textPath>
+      </text>
+    </g>
+
+    <!-- Pulse ring (orange flash during activation) -->
+    <circle id="pulse-ring" cx="400" cy="285" r="147" fill="none"
+      stroke="rgba(255,122,24,0)" stroke-width="2"/>
+
+  </svg>
+  <!-- ══════════════════════════════════════════════════════ -->
+
+  <!-- LENS REVEAL — clips-path-expands over the camera -->
+  <div id="lri">
+    <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=2000&q=90"
+      alt="Travel photography — hero"/>
+  </div>
+
+  <!-- WHITE FLASH -->
+  <div id="flash"></div>
+
+  <!-- HERO TEXT (phase 3 overlay) -->
+  <div id="hero-text">
+    <div class="ht-eyebrow">VK Lenscraft · 2026</div>
+    <h1 class="ht-title">Frames<br/><em>that linger.</em></h1>
+    <p class="ht-sub">A studio for slow, deliberate photographs.</p>
+    <a href="#portfolio" class="ht-cta">
+      View Portfolio
+      <span class="ht-cta-arr">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
+        </svg>
+      </span>
+    </a>
+  </div>
+
+</section>
+</div><!-- /#scroller -->
+
+<!-- ══════════════════ PORTFOLIO ══════════════════ -->
+<section id="portfolio">
+  <div class="pi">
+    <div class="p-eyebrow">Selected Work · 2024–26</div>
+    <h2 class="p-h">Light,<br/>Geometry,<br/><em>Silence.</em></h2>
+    <div class="grid">
+
+      <a href="#" class="card w8">
+        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=80" alt="Wedding"/>
+        <div class="veil"></div>
+        <span class="tag">Wedding</span>
+        <div class="ctitle">Anaya &amp; Rohan</div>
+      </a>
+
+      <a href="#" class="card w4">
+        <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&q=80" alt="Editorial"/>
+        <div class="veil"></div>
+        <span class="tag">Editorial</span>
+        <div class="ctitle">Quiet Hours</div>
+      </a>
+
+      <a href="#" class="card w4s">
+        <img src="https://images.unsplash.com/photo-1503066375634-1d6a4be97d52?auto=format&fit=crop&w=800&q=80" alt="Brand"/>
+        <div class="veil"></div>
+        <span class="tag">Brand</span>
+        <div class="ctitle">Maison Cire</div>
+      </a>
+
+      <a href="#" class="card w4s">
+        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80" alt="Travel"/>
+        <div class="veil"></div>
+        <span class="tag">Travel</span>
+        <div class="ctitle">Atlas Notes</div>
+      </a>
+
+      <a href="#" class="card w4s">
+        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=800&q=80" alt="Portrait"/>
+        <div class="veil"></div>
+        <span class="tag">Portrait</span>
+        <div class="ctitle">Ember Series</div>
+      </a>
+
+      <a href="#" class="card w8">
+        <img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1600&q=80" alt="Lifestyle"/>
+        <div class="veil"></div>
+        <span class="tag">Lifestyle</span>
+        <div class="ctitle">North &amp; Slow</div>
+      </a>
+
+    </div><!-- /.grid -->
+  </div>
+</section>
+
+<script>
+gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
+
+// ── LENS POSITION (calculated after DOM renders) ──
+let lensCX, lensCY, lensR;
+function measureLens() {
+  const g = document.getElementById('glass-circle');
+  const r = g.getBoundingClientRect();
+  lensCX = r.left + r.width  / 2;
+  lensCY = r.top  + r.height / 2;
+  lensR  = r.width / 2;
+  // Sync iris starting clip-path to the actual lens circle on screen
+  gsap.set('#lri', {
+    clipPath: `circle(${Math.round(lensR)}px at ${Math.round(lensCX)}px ${Math.round(lensCY)}px)`,
+    opacity: 1   // visible but fully clipped (clip = lens size = hidden until triggered)
+  });
+  // Start clipped (show nothing until phase 3)
+  gsap.set('#lri', { opacity: 0 });
+}
+
+// Run after fonts/layout settle
+window.addEventListener('load', () => {
+  measureLens();
+  buildTimeline();
+});
+window.addEventListener('resize', () => {
+  measureLens();
+  ScrollTrigger.refresh();
+});
+
+// ──────────────────────────────────────────────────────
+// ASSEMBLY: scattered starting positions
+// ──────────────────────────────────────────────────────
+// Each part gets gsap.set() to its "off-screen" scatter position.
+// The timeline animates them back to x:0 y:0 (SVG natural position).
+const scatterParts = [
+  // id                 x      y     rotation  scale
+  ['body-shadow',     -580,   20,    -10,     .87 ],
+  ['body-main',       -580,   20,    -10,     .87 ],
+  ['body-thl',        -580,   20,    -10,     .87 ],
+  ['body-rhl',        -580,   20,    -10,     .87 ],
+  ['body-glow-ovl',   -580,   20,    -10,     .87 ],
+  ['grip',            -780,   70,    -20,     .9  ],
+  ['top-plate',         0,  -400,      0,    1.0  ],
+  ['pentaprism',        0,  -500,      8,     .9  ],
+  ['hotshoe',          80,  -500,      0,    1.0  ],
+  ['mode-dial',       580,  -200,    180,     .8  ],
+  ['shutter-btn',     150,  -420,      0,    1.0  ],
+  ['controls-right',  600,    0,     14,      .9  ],
+  ['bottom-plate',      0,   420,     0,    1.0  ],
+];
+
+scatterParts.forEach(([id, x, y, r, s]) => {
+  const el = document.getElementById(id);
+  if (el) gsap.set(el, { x, y, rotation: r, scale: s, transformOrigin:'50% 50%' });
+});
+
+// Lens rings scattered positions (will animate on zig-zag curved paths)
+// We use intermediate positions to create zig-zag effect
+const LCX = 400, LCY = 285; // lens SVG center
+
+// Start positions for lens rings (off-screen)
+gsap.set('#lens-outer',  { x: -180, y: -300, rotation: -28, scale: .52, transformOrigin:`${LCX}px ${LCY}px` });
+gsap.set('#lens-ring-1', { x:  260, y: -340, rotation:  42, scale: .52, transformOrigin:`${LCX}px ${LCY}px` });
+gsap.set('#lens-ring-2', { x: -300, y:  260, rotation: -58, scale: .52, transformOrigin:`${LCX}px ${LCY}px` });
+gsap.set('#lens-ring-3', { x:  320, y:  200, rotation:  30, scale: .55, transformOrigin:`${LCX}px ${LCY}px` });
+gsap.set('#lens-ring-4', { x: -200, y: -460, rotation: -45, scale: .52, transformOrigin:`${LCX}px ${LCY}px` });
+gsap.set('#lens-glass',  { x:    0, y:  540, rotation:   0, scale: .40, transformOrigin:`${LCX}px ${LCY}px` });
+
+// Initially hidden / off
+gsap.set(['#blade-lines', '#reflections', '#hero-text', '#lri'], { opacity: 0 });
+gsap.set('#iris-hole', { attr: { r: 0 } });
+gsap.set('#hero-img',  { opacity: 0 });
+gsap.set('#glow',      { opacity: 0, scale: 1 });
+gsap.set('#pulse-ring', { attr: { stroke: 'rgba(255,122,24,0)' } });
+gsap.set('#flash',     { opacity: 0 });
+
+// ──────────────────────────────────────────────────────
+// BUILD MASTER TIMELINE
+// ──────────────────────────────────────────────────────
+let masterTl;
+
+function buildTimeline() {
+  masterTl = gsap.timeline({ paused: true });
+
+  // ══ PHASE 1: ASSEMBLY (progress 0 → 1.35) ══════════════
+
+  const e1 = 'power4.out';
+  const e2 = 'back.out(1.7)';
+
+  // ── Body arrives from left with a slight arc (two steps) ──
+  masterTl
+    // Step A: body swings to overshoot position
+    .to(['#body-shadow','#body-main','#body-thl','#body-rhl','#body-glow-ovl'],
+      { x: 40, y: -8, rotation: 3, scale: 1, ease: 'power3.out', duration: .7 }, 0.00)
+    // Step B: body settles into place (zig end)
+    .to(['#body-shadow','#body-main','#body-thl','#body-rhl','#body-glow-ovl'],
+      { x: 0, y: 0, rotation: 0, ease: 'back.out(1.4)', duration: .4 }, 0.70)
+
+    // Grip snaps from far-left with curve
+    .to('#grip', { x: -30, y: 30, rotation: -5, scale: 1, ease: e1, duration: .6 }, 0.06)
+    .to('#grip', { x: 0, y: 0, rotation: 0, ease: e2, duration: .4 }, 0.66)
+
+    // Bottom plate rises from below
+    .to('#bottom-plate', { x: 0, y: 0, rotation: 0, scale: 1, ease: e2, duration: .9 }, 0.10)
+
+    // Top plate drops from above
+    .to('#top-plate', { x: 0, y: 0, rotation: 0, scale: 1, ease: e1, duration: .9 }, 0.14)
+    // Pentaprism drops slightly after top plate
+    .to('#pentaprism', { x: 0, y: 0, rotation: 0, scale: 1, ease: e2, duration: .9 }, 0.22)
+    .to('#hotshoe',    { x: 0, y: 0, rotation: 0, scale: 1, ease: e1, duration: .8 }, 0.26)
+    .to('#shutter-btn',{ x: 0, y: 0, rotation: 0, scale: 1, ease: e2, duration: .9 }, 0.30)
+    .to('#mode-dial',  { x: 0, y: 0, rotation: 0, scale: 1, ease: e2, duration: 1.0 }, 0.24)
+    .to('#controls-right',{x:0,y:0,rotation:0,scale:1, ease:e1, duration:1.0 }, 0.20)
+
+    // Ambient glow fades in as parts assemble
+    .to('#glow', { opacity: 1, duration: .6 }, 0.45)
+
+    // ── Lens rings on ZIG-ZAG curved paths ──
+    // lens-outer: top-left → swing right → settle center
+    .to('#lens-outer',
+      { x: 60, y: -80, rotation: 18, scale: .78,
+        ease: 'power2.out', duration: .55,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.28)
+    .to('#lens-outer',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: e2, duration: .55,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.83)
+
+    // lens-ring-1: top-right → swing left → settle
+    .to('#lens-ring-1',
+      { x: -50, y: -60, rotation: -20, scale: .78,
+        ease: 'power2.out', duration: .5,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.36)
+    .to('#lens-ring-1',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: e2, duration: .5,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.86)
+
+    // lens-ring-2: bottom-left → swing up-right → settle
+    .to('#lens-ring-2',
+      { x: 80, y: 60, rotation: 25, scale: .8,
+        ease: 'power2.out', duration: .5,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.42)
+    .to('#lens-ring-2',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: e2, duration: .5,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.92)
+
+    // lens-ring-3: bottom-right → swing up-left → settle
+    .to('#lens-ring-3',
+      { x: -60, y: 50, rotation: -18, scale: .82,
+        ease: 'power2.out', duration: .48,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.48)
+    .to('#lens-ring-3',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: e2, duration: .48,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.96)
+
+    // lens-ring-4: top-center → swing → settle
+    .to('#lens-ring-4',
+      { x: 40, y: -50, rotation: 12, scale: .84,
+        ease: 'power2.out', duration: .44,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.54)
+    .to('#lens-ring-4',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: e2, duration: .44,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.98)
+
+    // lens-glass: rises from below into place (last)
+    .to('#lens-glass',
+      { x: 0, y: 0, rotation: 0, scale: 1,
+        ease: 'back.out(1.2)', duration: .55,
+        transformOrigin:`${LCX}px ${LCY}px` }, 0.82)
+
+  // ══ LOCK-IN THUD at assembly complete (mechanical snap) ══
+    .to('#cam', { x:-5, duration:.04, ease:'none' }, 1.35)
+    .to('#cam', { x: 5, duration:.04, ease:'none' }, 1.39)
+    .to('#cam', { x:-2, duration:.03, ease:'none' }, 1.43)
+    .to('#cam', { x: 0, duration:.04, ease:'none' }, 1.46)
+
+  // ══ PHASE 2: ACTIVATION (1.35 → 2.10) ══════════════════
+
+    // Focus breath — lens rings subtly scale
+    .to(['#lens-ring-2','#lens-ring-3'],
+      { scale: 1.028, transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'sine.inOut', duration:.18 }, 1.52)
+    .to(['#lens-ring-2','#lens-ring-3'],
+      { scale: 1, transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'sine.inOut', duration:.18 }, 1.70)
+
+    // Second micro-focus
+    .to(['#lens-ring-2','#lens-ring-3'],
+      { scale: 1.015, transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'sine.inOut', duration:.12 }, 1.74)
+    .to(['#lens-ring-2','#lens-ring-3'],
+      { scale: 1, transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'sine.inOut', duration:.12 }, 1.86)
+
+    // Orange pulse ring
+    .to('#pulse-ring',
+      { attr:{ stroke:'rgba(255,122,24,.50)', r:152 }, duration:.12 }, 1.52)
+    .to('#pulse-ring',
+      { attr:{ stroke:'rgba(255,122,24,0)',   r:166 }, duration:.30 }, 1.64)
+
+    // ── SHUTTER OPEN (first) ──
+    // blade lines appear
+    .to('#blade-lines', { opacity: 1, duration:.08 }, 1.62)
+    // iris hole grows → dark cover disappears → glass visible
+    .to('#iris-hole', { attr:{ r: 93 }, ease:'power2.inOut', duration:.22 }, 1.62)
+    // blade sectors rotate outward (opening)
+    .to(['#blade-0','#blade-1','#blade-2','#blade-3','#blade-4','#blade-5'],
+      { rotation: '+=55', transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'power2.inOut', duration:.22, stagger: 0 }, 1.62)
+    // reflections flash in
+    .to('#reflections', { opacity: 1, duration:.18 }, 1.68)
+    // second orange pulse
+    .to('#pulse-ring',
+      { attr:{ stroke:'rgba(255,122,24,.38)', r:152 }, duration:.10 }, 1.68)
+    .to('#pulse-ring',
+      { attr:{ stroke:'rgba(255,122,24,0)',   r:162 }, duration:.24 }, 1.78)
+
+    // ── SHUTTER CLOSE ──
+    .to('#iris-hole', { attr:{ r: 0 }, ease:'power2.inOut', duration:.20 }, 1.88)
+    .to(['#blade-0','#blade-1','#blade-2','#blade-3','#blade-4','#blade-5'],
+      { rotation: '-=55', transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'power2.inOut', duration:.20, stagger: 0 }, 1.88)
+    .to('#blade-lines', { opacity: 0, duration:.10 }, 1.96)
+
+    // Light-leak sweep across frame during activation
+    .to('#light-leak', { opacity: 1, duration:.15 }, 1.64)
+    .to('#light-leak', { x:'100%', duration:.45, ease:'power1.in' }, 1.72)
+    .to('#light-leak', { opacity: 0, duration:.1 }, 2.05)
+    .set('#light-leak', { x: 0 }, 2.16)
+
+  // ══ PHASE 3: REVEAL (2.10 → 3.00) ══════════════════════
+
+    // Shutter opens permanently
+    .to('#iris-hole', { attr:{ r: 95 }, ease:'power3.inOut', duration:.38 }, 2.12)
+    .to('#blade-lines', { opacity: 1, duration:.12 }, 2.12)
+    .to(['#blade-0','#blade-1','#blade-2','#blade-3','#blade-4','#blade-5'],
+      { rotation: '+=55', transformOrigin:`${LCX}px ${LCY}px`,
+        ease:'power3.inOut', duration:.38, stagger: 0 }, 2.12)
+
+    // Hero thumbnail fades into lens
+    .to('#hero-img', { opacity: 1, ease:'power2.out', duration:.28 }, 2.36)
+
+    // Glow intensifies behind camera
+    .to('#glow', { scale: 1.8, opacity: .95, duration:.4 }, 2.28)
+
+    // Camera fades and scales back
+    .to('#cam', { opacity: 0, scale: .92, ease:'power2.in', duration:.35 }, 2.50)
+
+    // Lens reveal div comes alive — clip-path expands from lens center to cover viewport
+    // (exact values set after measuring lens position — see onUpdate below)
+    .to('#lri', { opacity: 1, duration:.05 }, 2.52)
+
+    // Camera flash!
+    .to('#flash', { opacity: .65, duration:.05 }, 2.60)
+    .to('#flash', { opacity: 0,   duration:.40, ease:'power2.out' }, 2.65)
+
+    // Glow fades
+    .to('#glow', { opacity: 0, duration:.32 }, 2.58)
+
+    // Hero text fades in over fullscreen photo
+    .to('#hero-text', { opacity: 1, ease:'power2.out', duration:.50, pointerEvents:'auto' }, 2.72);
+
+  // ── SCROLL TRIGGER ──
+  ScrollTrigger.create({
+    trigger: '#scroller',
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 1.6,
+    onUpdate: self => {
+      const p = self.progress;
+      masterTl.progress(p);
+
+      // Expand clip-path in phase 3 (progress 0.84→1.0 = timeline 2.52→3.0)
+      if (lensCX && lensCY && lensR) {
+        // Map scroll progress to clip-path expansion
+        const revealStart = 0.845; // ~tl 2.53
+        const revealEnd   = 0.900; // ~tl 2.70
+        const expandP = Math.max(0, Math.min(1, (p - revealStart) / (revealEnd - revealStart)));
+        const r = lensR + expandP * (window.innerWidth * 1.5 - lensR); // expand to 150vw radius
+        if (expandP > 0) {
+          gsap.set('#lri', {
+            clipPath: `circle(${Math.round(r)}px at ${Math.round(lensCX)}px ${Math.round(lensCY)}px)`
+          });
+        } else {
+          gsap.set('#lri', {
+            clipPath: `circle(${Math.round(lensR)}px at ${Math.round(lensCX)}px ${Math.round(lensCY)}px)`
+          });
+        }
+      }
+
+      // Phase label
+      const lbl = document.getElementById('plabel');
+      if      (p < 0.38) lbl.textContent = '01 · Assembly';
+      else if (p < 0.70) lbl.textContent = '02 · Activation';
+      else               lbl.textContent = '03 · Reveal';
+
+      // Scroll hint hides on first scroll
+      document.getElementById('hint').style.opacity = p > 0.025 ? 0 : 1;
+    }
+  });
+
+  // Ambient glow slow spin (always on)
+  gsap.to('#glow', { rotation: 360, duration: 24, repeat: -1, ease: 'none' });
+}
+
+// ── PORTFOLIO CARD REVEAL (IntersectionObserver) ──
+const cardIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      gsap.to(e.target, {
+        opacity: 1, y: 0, duration: .85, ease: 'power3.out',
+        delay: parseFloat(e.target.dataset.d || 0)
+      });
+      cardIO.unobserve(e.target);
+    }
+  });
+}, { threshold: .12 });
+
+document.querySelectorAll('.card').forEach((c, i) => {
+  c.dataset.d = (i % 4) * 0.08;
+  cardIO.observe(c);
+});
+
+// ── CUSTOM CURSOR ──
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: .1, ease:'none' });
+});
+document.querySelectorAll('a, button, .card').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+});
+</script>
+</body>
+</html>
