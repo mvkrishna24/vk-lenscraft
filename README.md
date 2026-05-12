@@ -1,22 +1,30 @@
-# CODING AGENTS: READ THIS FIRST
+# VK Lenscraft
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Photography portfolio for **Vamshi Krishna** — a studio practice rooted in India, covering wedding, travel, editorial and portrait work.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+## Pages
 
-## What you should do — IMPORTANT
+| File | Description |
+|------|-------------|
+| `index.html` | Main portfolio — hero, work grid, about, services, contact |
+| `camera-landing.html` | Interactive camera scroll experience |
 
-**Read `vk-lenscraft/project/VK Lenscraft.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## Design system
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+`ds/colors_and_type.css` — design tokens (colors, typography, spacing, radius). Fonts: Saira Condensed (display), Cormorant Garamond (body), JetBrains Mono (UI/mono).
 
-## About the design files
+## Assets
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+All portfolio images live in `uploads/`. Key files:
+- `hero_image-1778058486566.png` — hero section subject
+- `VK lenscraft.webp` — about section portrait
+- `portrait-ember.png` — ember studio portrait card
+- `brand-maison-cire.png` — Maison Cire brand campaign card
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+## Tech
 
-## Bundle contents
+Pure HTML/CSS/JS — no build step, no dependencies. Camera landing page uses GSAP (CDN) for scroll animations.
 
-- `vk-lenscraft/README.md` — this file
-- `vk-lenscraft/project/` — the `VK Lenscraft` project files (HTML prototypes, assets, components)
+## Contact
+
+marthavamshikrishna1024@gmail.com
