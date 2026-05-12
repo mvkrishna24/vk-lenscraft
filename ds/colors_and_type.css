@@ -1,10 +1,4 @@
-/* ============================================================
-   Bugatti Design System — Colors & Typography
-   Pure black canvas, white uppercase letterspaced display,
-   serif body, monospace UI. Weight 400 everywhere.
-   ============================================================ */
-
-/* ---- Substitute web fonts (replace with Bugatti faces when available) ---- */
+/* VK Lenscraft — Design Tokens: Colors & Typography */
 @import url("https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
 
 :root {
@@ -38,9 +32,9 @@
   --bg-success: #5fa657;
 
   /* ---------- Type families ---------- */
-  --bg-font-display: "Saira Condensed", "Bugatti Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --bg-font-body: "Cormorant Garamond", "Bugatti Text Regular", Garamond, "Times New Roman", serif;
-  --bg-font-mono: "JetBrains Mono", "Bugatti Monospace", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+  --bg-font-display: "Saira Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-font-body: "Cormorant Garamond", Garamond, "Times New Roman", serif;
+  --bg-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
 
   /* ---------- Spacing ---------- */
   --bg-space-xxs: 4px;
